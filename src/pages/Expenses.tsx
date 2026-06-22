@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, IndianRupee } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Plus, Search, IndianRupee, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function Expenses() {
   const [expenses, setExpenses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newExpense, setNewExpense] = useState({ description: '', amount: '', category: 'Stock', method: 'UPI' });
 
   useEffect(() => {
     fetch('/api/expenses')
@@ -16,8 +19,84 @@ export default function Expenses() {
       .catch(console.error);
   }, []);
 
+  const handleAddExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    fetch('/api/expenses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        description: newExpense.description, 
+        amount: parseFloat(newExpense.amount), 
+        category: newExpense.category,
+        method: newExpense.method 
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      setExpenses([data, ...expenses]);
+      setIsModalOpen(false);
+      setNewExpense({ description: '', amount: '', category: 'Stock', method: 'UPI' });
+    });
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden relative"
+            >
+              <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 className="font-semibold text-slate-900">Record New Expense</h3>
+                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <form onSubmit={handleAddExpense} className="p-5 space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Description</label>
+                  <input required value={newExpense.description} onChange={e => setNewExpense({...newExpense, description: e.target.value})} type="text" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500" placeholder="e.g. Electricity Bill" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">Category</label>
+                    <select value={newExpense.category} onChange={e => setNewExpense({...newExpense, category: e.target.value})} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500">
+                      <option value="Bills">Bills</option>
+                      <option value="Maintenance">Maintenance</option>
+                      <option value="Stock">Stock</option>
+                      <option value="Salary">Salary</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">Amount (₹)</label>
+                    <input required min="0" step="0.01" value={newExpense.amount} onChange={e => setNewExpense({...newExpense, amount: e.target.value})} type="number" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500" placeholder="0.00" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Payment Method</label>
+                  <select value={newExpense.method} onChange={e => setNewExpense({...newExpense, method: e.target.value})} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500">
+                    <option value="UPI">UPI</option>
+                    <option value="CASH">Cash</option>
+                    <option value="CARD">Card</option>
+                    <option value="BANK TRANSFER">Bank Transfer</option>
+                  </select>
+                </div>
+                <div className="pt-2">
+                  <button type="submit" className="w-full bg-primary-600 hover:bg-primary-700 text-white py-2 rounded-lg text-sm font-medium transition-colors">
+                    Save Expense
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -29,6 +108,7 @@ export default function Expenses() {
           <p className="text-[12px] text-slate-500 mt-1">Track your overheads, stock purchases, and bills.</p>
         </div>
         <motion.button 
+          onClick={() => setIsModalOpen(true)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2 text-[13px]"

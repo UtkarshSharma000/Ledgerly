@@ -47,3 +47,12 @@ body {
   @apply bg-slate-100 text-slate-900;
 }
 
+/* Hide Unicorn Studio watermark */
+a[href*="unicorn.studio"], 
+img[src*="us_fwb.png"] {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+

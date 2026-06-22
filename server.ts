@@ -31,13 +31,25 @@ async function startServer() {
       return res.json({ stats: dashboardStats, revenueTrends, recentTransactions });
     }
     try {
-      // Very basic implementation: aggregate stats
       const [todaySales] = await db.select({ total: sql`sum(${sales.total})` }).from(sales);
       const [todayExpenses] = await db.select({ total: sql`sum(${expenses.amount})` }).from(expenses);
       const [outstandingUdhaar] = await db.select({ total: sql`sum(${customers.amountOwed})` }).from(customers);
       
       const recentTrxSales = await db.select({ id: sales.id, amount: sales.total, desc: sales.product, method: sales.method, date: sales.date })
         .from(sales).orderBy(desc(sales.date)).limit(5);
+
+      // Last 7 days revenue trend
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const dailySales = await db.select({
+        day: sql<string>`to_char(${sales.date}, 'Mon DD')`,
+        revenue: sql<number>`sum(${sales.total})`,
+      })
+      .from(sales)
+      .where(sql`${sales.date} >= ${sevenDaysAgo}`)
+      .groupBy(sql`to_char(${sales.date}, 'Mon DD')`)
+      .orderBy(sql`min(${sales.date})`);
         
       res.json({
         stats: {
@@ -46,7 +58,7 @@ async function startServer() {
           netProfit: (todaySales?.total || 0) - (todayExpenses?.total || 0),
           outstandingUdhaar: outstandingUdhaar?.total || 0
         },
-        revenueTrends: revenueTrends, // Placeholder for actual timeseries
+        revenueTrends: dailySales.length > 0 ? dailySales : revenueTrends, // Fallback if no data
         recentTransactions: recentTrxSales.map(t => ({
           type: 'credit',
           amount: t.amount,
@@ -97,6 +109,20 @@ async function startServer() {
     }
   });
 
+  app.post("/api/expenses", async (req, res) => {
+    if (!db) {
+      const newExpense = { id: `EXP-${Date.now()}`, date: new Date().toISOString().split('T')[0], ...req.body };
+      expensesData.unshift(newExpense);
+      return res.status(201).json(newExpense);
+    }
+    try {
+      const newExpense = await db.insert(expenses).values(req.body).returning();
+      res.status(201).json(newExpense[0]);
+    } catch (err) {
+      res.status(500).json({ error: (err as any).message });
+    }
+  });
+
   // Udhaar (Debts)
   app.get("/api/udhaar", async (req, res) => {
     if (!db) return res.json(udhaarData);
@@ -108,12 +134,62 @@ async function startServer() {
     }
   });
 
+  app.post("/api/udhaar", async (req, res) => {
+    if (!db) {
+      const newCustomer = { id: `CUST-${Date.now()}`, lastPurchase: new Date().toISOString().split('T')[0], ...req.body };
+      udhaarData.push(newCustomer);
+      return res.status(201).json(newCustomer);
+    }
+    try {
+      const newCustomer = await db.insert(customers).values(req.body).returning();
+      res.status(201).json(newCustomer[0]);
+    } catch (err) {
+      res.status(500).json({ error: (err as any).message });
+    }
+  });
+
+  app.put("/api/udhaar/:id/payment", async (req, res) => {
+    if (!db) return res.json({ success: true });
+    try {
+      const { paymentAmount } = req.body;
+      const [customer] = await db.select().from(customers).where(eq(customers.id, parseInt(req.params.id)));
+      if (!customer) return res.status(404).json({ error: "Customer not found" });
+
+      const newAmount = Math.max(0, customer.amountOwed - paymentAmount);
+      const updated = await db.update(customers)
+        .set({ 
+          amountOwed: newAmount, 
+          status: newAmount === 0 ? 'Settled' : 'Unpaid',
+          lastPayment: new Date()
+        })
+        .where(eq(customers.id, parseInt(req.params.id)))
+        .returning();
+      res.json(updated[0]);
+    } catch (err) {
+      res.status(500).json({ error: (err as any).message });
+    }
+  });
+
   // Inventory
   app.get("/api/inventory", async (req, res) => {
     if (!db) return res.json(inventoryData);
     try {
       const data = await db.select().from(inventory);
       res.json(data);
+    } catch (err) {
+      res.status(500).json({ error: (err as any).message });
+    }
+  });
+
+  app.post("/api/inventory", async (req, res) => {
+    if (!db) {
+      const newItem = { id: `ITEM-${Date.now()}`, ...req.body };
+      inventoryData.push(newItem);
+      return res.status(201).json(newItem);
+    }
+    try {
+      const newItem = await db.insert(inventory).values(req.body).returning();
+      res.status(201).json(newItem[0]);
     } catch (err) {
       res.status(500).json({ error: (err as any).message });
     }
