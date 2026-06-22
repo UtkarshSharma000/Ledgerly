@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, IndianRupee, BellRing, UserPlus, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 

@@ -4,6 +4,92 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My Google AI Studio App</title>
+    <script>
+      (function() {
+        var BLOCKED_URL = 'us_fwb.png';
+        var EMPTY_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+
+        // 1. Intercept Fetch & XHR
+        var oldFetch = window.fetch;
+        window.fetch = function(...args) {
+          var url = args[0];
+          if (typeof url === 'string' && url.includes(BLOCKED_URL)) {
+            return Promise.resolve(new Response(new Blob([], { type: 'image/png' })));
+          }
+          return oldFetch.apply(this, args);
+        };
+
+        var oldXHR = window.XMLHttpRequest.prototype.open;
+        window.XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+          if (typeof url === 'string' && url.includes(BLOCKED_URL)) {
+            url = EMPTY_IMAGE;
+          }
+          return oldXHR.call(this, method, url, ...rest);
+        };
+
+        // 2. Intercept Image src
+        var imgDesc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+        if (imgDesc) {
+          Object.defineProperty(HTMLImageElement.prototype, 'src', {
+            set: function(val) {
+              if (typeof val === 'string' && val.includes(BLOCKED_URL)) {
+                val = EMPTY_IMAGE;
+              }
+              return imgDesc.set.call(this, val);
+            },
+            get: function() {
+              return imgDesc.get.call(this);
+            }
+          });
+        }
+
+        // 3. Inject CSS into Shadow DOMs
+        var oldAttachShadow = Element.prototype.attachShadow;
+        Element.prototype.attachShadow = function() {
+          var shadowRoot = oldAttachShadow.apply(this, arguments);
+          var style = document.createElement('style');
+          style.textContent = 'a[href*="unicorn.studio"], img[src*="us_fwb"] { display: none !important; opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }';
+          shadowRoot.appendChild(style);
+          // MutationObserver inside shadow DOM
+          var mo = new MutationObserver(function() {
+             var shadowStyle = document.createElement('style');
+             shadowStyle.textContent = 'a[href*="unicorn.studio"], img[src*="us_fwb"] { display: none !important; opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }';
+             if (!shadowRoot.querySelector('style')) {
+                 shadowRoot.appendChild(shadowStyle);
+             }
+          });
+          mo.observe(shadowRoot, { childList: true });
+          return shadowRoot;
+        };
+
+        // 4. Overwrite setAttribute
+        var oldSetAttribute = Element.prototype.setAttribute;
+        Element.prototype.setAttribute = function(name, value) {
+           if (name === 'href' && typeof value === 'string' && value.includes('unicorn.studio')) {
+              value = '#';
+              this.style.display = 'none';
+           }
+           if (name === 'src' && typeof value === 'string' && value.includes(BLOCKED_URL)) {
+              value = EMPTY_IMAGE;
+              this.style.display = 'none';
+           }
+           // if background-image
+           if (name === 'style' && typeof value === 'string' && value.includes(BLOCKED_URL)) {
+              value = value.replace(/url\([^)]*us_fwb\.png[^)]*\)/g, 'none');
+           }
+           return oldSetAttribute.call(this, name, value);
+        }
+      })();
+    </script>
+    <style>
+      a[href*="unicorn.studio"],
+      img[src*="us_fwb"] {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
