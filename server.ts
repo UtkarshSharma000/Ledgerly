@@ -13,7 +13,10 @@ import {
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  
+  // Use port from CLI arguments if provided, else default to 3000 to satisfy platform constraints
+  const portArg = process.argv.slice(2).find(arg => /^\d+$/.test(arg));
+  const PORT = portArg ? parseInt(portArg, 10) : 3000;
 
   app.use(express.json());
 
