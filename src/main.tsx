@@ -2,6 +2,7 @@ import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import { ClerkProvider } from '@clerk/clerk-react';
 import App from './App.tsx';
+import { installApiJsonFallback } from './apiFallback';
 import './index.css';
 
 // Handle/Suppress benign ResizeObserver loop errors/warnings that trigger in iframe or charting environments
@@ -19,6 +20,8 @@ if (typeof window !== 'undefined') {
 }
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
+installApiJsonFallback();
 
 const root = createRoot(document.getElementById('root')!);
 
