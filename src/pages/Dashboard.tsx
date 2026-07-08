@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, TrendingDown, IndianRupee, Wallet, CreditCard, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { IndianRupee, Wallet, CreditCard, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface Stats {
@@ -44,7 +44,10 @@ export default function Dashboard() {
     );
   }
 
-  const KPICard = ({ title, amount, icon: Icon, trend, isPositive, bgClass = "bg-white", delay = 0 }: any) => (
+  const hasRevenueTrends = data.revenueTrends.length > 0;
+  const hasRecentTransactions = data.recentTransactions.length > 0;
+
+  const KPICard = ({ title, amount, icon: Icon, bgClass = "bg-white", delay = 0 }: any) => (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -64,28 +67,23 @@ export default function Dashboard() {
           <Icon className="w-5 h-5 text-slate-600" />
         </div>
       </div>
-      {trend && (
-        <div className={`mt-1 flex items-center text-[11px] font-medium ${isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
-          {isPositive ? '↑' : '↓'} {trend}% vs yesterday
-        </div>
-      )}
     </motion.div>
   );
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-[16px] font-bold text-slate-900 tracking-tight">Ganesha Kirana & General Store</h1>
+        <h1 className="text-[16px] font-bold text-slate-900 tracking-tight">Ledgerly Dashboard</h1>
         <div className="text-[12px] text-slate-500">
-          {new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })} • Daily Close 21:00
+          {new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard title="Today's Sales" amount={data.stats.todaySales} icon={Wallet} trend={12.5} isPositive={true} delay={0.1} />
-        <KPICard title="Today's Expenses" amount={data.stats.todayExpenses} icon={CreditCard} trend={4.2} isPositive={false} delay={0.2} />
-        <KPICard title="Net Profit" amount={data.stats.netProfit} icon={IndianRupee} trend={24.1} isPositive={true} bgClass="bg-emerald-50/50 border-emerald-100" delay={0.3} />
-        <KPICard title="Outstanding Udhaar" amount={data.stats.outstandingUdhaar} icon={Users} trend={2.1} isPositive={false} bgClass="bg-rose-50/50 border-rose-100" delay={0.4} />
+        <KPICard title="Today's Sales" amount={data.stats.todaySales} icon={Wallet} delay={0.1} />
+        <KPICard title="Today's Expenses" amount={data.stats.todayExpenses} icon={CreditCard} delay={0.2} />
+        <KPICard title="Net Profit" amount={data.stats.netProfit} icon={IndianRupee} bgClass="bg-emerald-50/50 border-emerald-100" delay={0.3} />
+        <KPICard title="Outstanding Udhaar" amount={data.stats.outstandingUdhaar} icon={Users} bgClass="bg-rose-50/50 border-rose-100" delay={0.4} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -107,27 +105,33 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data.revenueTrends} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-primary-500)" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="var(--color-primary-500)" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} dx={-10} tickFormatter={(val) => `₹${val/1000}k`} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, undefined]}
-                />
-                <Area type="monotone" dataKey="revenue" stroke="var(--color-primary-500)" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
-                <Area type="monotone" dataKey="expenses" stroke="#cbd5e1" strokeWidth={2} fill="none" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          {hasRevenueTrends ? (
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data.revenueTrends} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--color-primary-500)" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="var(--color-primary-500)" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} dx={-10} tickFormatter={(val) => `₹${val/1000}k`} />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, undefined]}
+                  />
+                  <Area type="monotone" dataKey="revenue" stroke="var(--color-primary-500)" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
+                  <Area type="monotone" dataKey="expenses" stroke="#cbd5e1" strokeWidth={2} fill="none" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="flex h-72 items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 text-sm font-medium text-slate-500">
+              No revenue data yet
+            </div>
+          )}
         </motion.div>
 
         {/* Recent Transactions */}
@@ -148,7 +152,11 @@ export default function Dashboard() {
             </motion.button>
           </div>
           <div className="space-y-4 flex-1 overflow-auto">
-            {data.recentTransactions.map((trx, idx) => (
+            {!hasRecentTransactions ? (
+              <div className="flex h-56 items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 text-sm font-medium text-slate-500">
+                No transactions yet
+              </div>
+            ) : data.recentTransactions.map((trx, idx) => (
               <motion.div 
                 key={idx} 
                 initial={{ opacity: 0, x: -10 }}

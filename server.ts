@@ -5,14 +5,31 @@ import { db } from "./src/db/index.js";
 import { sales, expenses, customers, inventory, udhaarEntries, payments } from "./src/db/schema.js";
 import { desc, sql, eq } from "drizzle-orm";
 import { 
-  dashboardStats, 
   salesData, 
   expensesData, 
   udhaarData, 
-  inventoryData, 
-  revenueTrends,
-  recentTransactions
+  inventoryData
 } from "./src/mocks/db.js";
+
+const emptyDashboardData = {
+  stats: {
+    todaySales: 0,
+    todayExpenses: 0,
+    netProfit: 0,
+    outstandingUdhaar: 0,
+    cashBalance: 0,
+    digitalBalance: 0,
+    monthlyGrowth: 0
+  },
+  revenueTrends: [],
+  recentTransactions: []
+};
+
+function missingDatabase(res: express.Response) {
+  return res.status(503).json({
+    error: "Database is not configured. Connect DATABASE_URL to store real Ledgerly data."
+  });
+}
 
 async function startServer() {
   const app = express();
@@ -101,14 +118,16 @@ async function startServer() {
     }
   }
 
-  await seedDatabaseIfEmpty();
+  if (db && process.env.SEED_DEMO_DATA === "true") {
+    await seedDatabaseIfEmpty();
+  }
 
   // --- API Routes ---
   
   // Dashboard
   app.get("/api/dashboard", async (req, res) => {
     if (!db) {
-      return res.json({ stats: dashboardStats, revenueTrends, recentTransactions });
+      return res.json(emptyDashboardData);
     }
     try {
       const [todaySales] = await db.select({ total: sql`sum(${sales.total})` }).from(sales);
@@ -138,7 +157,7 @@ async function startServer() {
           netProfit: (todaySales?.total || 0) - (todayExpenses?.total || 0),
           outstandingUdhaar: outstandingUdhaar?.total || 0
         },
-        revenueTrends: dailySales.length > 0 ? dailySales : revenueTrends, // Fallback if no data
+        revenueTrends: dailySales,
         recentTransactions: recentTrxSales.map(t => ({
           type: 'credit',
           amount: t.amount,
@@ -149,13 +168,13 @@ async function startServer() {
       });
     } catch (err) {
       console.error(err);
-      res.json({ stats: dashboardStats, revenueTrends, recentTransactions });
+      res.status(500).json({ error: (err as any).message });
     }
   });
 
   // Sales
   app.get("/api/sales", async (req, res) => {
-    if (!db) return res.json(salesData);
+    if (!db) return res.json([]);
     try {
       const data = await db.select().from(sales).orderBy(desc(sales.date)).limit(50);
       res.json(data);
@@ -166,9 +185,7 @@ async function startServer() {
   
   app.post("/api/sales", async (req, res) => {
     if (!db) {
-      const newSale = { id: `SALE-${Date.now()}`, date: new Date().toISOString().split('T')[0], ...req.body };
-      salesData.unshift(newSale);
-      return res.status(201).json(newSale);
+      return missingDatabase(res);
     }
     try {
       const newSale = await db.insert(sales).values(req.body).returning();
@@ -180,7 +197,7 @@ async function startServer() {
 
   // Expenses
   app.get("/api/expenses", async (req, res) => {
-    if (!db) return res.json(expensesData);
+    if (!db) return res.json([]);
     try {
       const data = await db.select().from(expenses).orderBy(desc(expenses.date)).limit(50);
       res.json(data);
@@ -191,9 +208,7 @@ async function startServer() {
 
   app.post("/api/expenses", async (req, res) => {
     if (!db) {
-      const newExpense = { id: `EXP-${Date.now()}`, date: new Date().toISOString().split('T')[0], ...req.body };
-      expensesData.unshift(newExpense);
-      return res.status(201).json(newExpense);
+      return missingDatabase(res);
     }
     try {
       const newExpense = await db.insert(expenses).values(req.body).returning();
@@ -206,13 +221,7 @@ async function startServer() {
   // Customers Page Endpoints
   app.get("/api/customers", async (req, res) => {
     if (!db) {
-      return res.json(udhaarData.map(c => ({
-        ...c,
-        totalUdhaar: c.amountOwed || 0,
-        paidAmount: 0,
-        pendingAmount: c.amountOwed || 0,
-        transactions: []
-      })));
+      return res.json([]);
     }
     try {
       const allCustomers = await db.select().from(customers);
@@ -258,9 +267,7 @@ async function startServer() {
 
   app.post("/api/customers", async (req, res) => {
     if (!db) {
-      const newCust = { id: Date.now(), createdAt: new Date(), ...req.body, amountOwed: 0, status: 'Good' };
-      udhaarData.push(newCust);
-      return res.status(201).json(newCust);
+      return missingDatabase(res);
     }
     try {
       const { name, phone, address, profilePhotoUrl, notes } = req.body;
@@ -284,15 +291,7 @@ async function startServer() {
   app.get("/api/customers/:id", async (req, res) => {
     const custId = parseInt(req.params.id);
     if (!db) {
-      const c = udhaarData.find(u => String(u.id) === String(custId) || String(u.id) === `CUST-${custId}`);
-      if (!c) return res.status(404).json({ error: "Customer not found" });
-      return res.json({
-        customer: c,
-        totalUdhaar: c.amountOwed || 0,
-        paidAmount: 0,
-        pendingAmount: c.amountOwed || 0,
-        history: []
-      });
+      return missingDatabase(res);
     }
     try {
       const [customer] = await db.select().from(customers).where(eq(customers.id, custId));
@@ -347,7 +346,7 @@ async function startServer() {
 
   // Udhaar (Debts) - returning custom/aggregated metrics
   app.get("/api/udhaar", async (req, res) => {
-    if (!db) return res.json(udhaarData);
+    if (!db) return res.json([]);
     try {
       const allCustomers = await db.select().from(customers);
       const allEntries = await db.select().from(udhaarEntries);
@@ -383,15 +382,7 @@ async function startServer() {
 
   app.post("/api/udhaar", async (req, res) => {
     if (!db) {
-      const { customerId } = req.body;
-      if (customerId) {
-        const entry = { id: Date.now(), ...req.body, createdAt: new Date() };
-        return res.status(201).json(entry);
-      } else {
-        const newCustomer = { id: `CUST-${Date.now()}`, lastPurchase: new Date().toISOString(), ...req.body };
-        udhaarData.push(newCustomer);
-        return res.status(201).json(newCustomer);
-      }
+      return missingDatabase(res);
     }
     try {
       const { customerId, amount, reason, dueDate, verificationPhotoUrl } = req.body;
@@ -462,7 +453,7 @@ async function startServer() {
 
   app.post("/api/payments", async (req, res) => {
     if (!db) {
-      return res.status(201).json({ success: true, id: Date.now() });
+      return missingDatabase(res);
     }
     try {
       const { customerId, amount, paymentMethod, notes, udhaarEntryId } = req.body;
@@ -522,7 +513,7 @@ async function startServer() {
   });
 
   app.put("/api/udhaar/:id/payment", async (req, res) => {
-    if (!db) return res.json({ success: true });
+    if (!db) return missingDatabase(res);
     try {
       const { paymentAmount } = req.body;
       const parsedCustId = parseInt(req.params.id);
@@ -557,7 +548,7 @@ async function startServer() {
 
   // Inventory
   app.get("/api/inventory", async (req, res) => {
-    if (!db) return res.json(inventoryData);
+    if (!db) return res.json([]);
     try {
       const data = await db.select().from(inventory);
       res.json(data);
@@ -568,9 +559,7 @@ async function startServer() {
 
   app.post("/api/inventory", async (req, res) => {
     if (!db) {
-      const newItem = { id: `ITEM-${Date.now()}`, ...req.body };
-      inventoryData.push(newItem);
-      return res.status(201).json(newItem);
+      return missingDatabase(res);
     }
     try {
       const newItem = await db.insert(inventory).values(req.body).returning();

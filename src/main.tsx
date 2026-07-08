@@ -20,14 +20,27 @@ if (typeof window !== 'undefined') {
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-if (!PUBLISHABLE_KEY) {
-  console.error("Missing VITE_CLERK_PUBLISHABLE_KEY");
-}
+const root = createRoot(document.getElementById('root')!);
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY || ''} afterSignOutUrl="/">
-      <App />
-    </ClerkProvider>
-  </StrictMode>,
-);
+if (!PUBLISHABLE_KEY) {
+  root.render(
+    <StrictMode>
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
+        <div className="max-w-md rounded-lg border border-white/10 bg-white/5 p-6 shadow-xl">
+          <h1 className="text-xl font-semibold">Authentication is not configured</h1>
+          <p className="mt-2 text-sm text-slate-300">
+            Add VITE_CLERK_PUBLISHABLE_KEY to your environment before opening Ledgerly.
+          </p>
+        </div>
+      </div>
+    </StrictMode>,
+  );
+} else {
+  root.render(
+    <StrictMode>
+      <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
+        <App />
+      </ClerkProvider>
+    </StrictMode>,
+  );
+}
