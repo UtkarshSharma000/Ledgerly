@@ -31,12 +31,17 @@ export default function Expenses() {
         method: newExpense.method 
       })
     })
-    .then(res => res.json())
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to save expense');
+      return data;
+    })
     .then(data => {
       setExpenses([data, ...expenses]);
       setIsModalOpen(false);
       setNewExpense({ description: '', amount: '', category: 'Stock', method: 'UPI' });
-    });
+    })
+    .catch(err => alert(err.message));
   };
 
   return (

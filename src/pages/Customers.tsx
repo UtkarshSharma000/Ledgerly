@@ -226,13 +226,20 @@ export default function Customers() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
-    .then(res => res.json())
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to add customer');
+      return data;
+    })
     .then(() => {
       fetchCustomers();
       setIsAddModalOpen(false);
       resetAddForm();
     })
-    .catch(err => console.error('Error adding customer:', err));
+    .catch(err => {
+      console.error('Error adding customer:', err);
+      alert(err.message);
+    });
   };
 
   const handleSaveUdhaar = async (e: React.FormEvent) => {
@@ -255,7 +262,11 @@ export default function Customers() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
-    .then(res => res.json())
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to record udhaar');
+      return data;
+    })
     .then(() => {
       fetchCustomers();
       if (selectedCustomer) {
@@ -264,7 +275,10 @@ export default function Customers() {
       setIsUdhaarModalOpen(false);
       resetUdhaarForm();
     })
-    .catch(err => console.error('Error recording udhaar:', err));
+    .catch(err => {
+      console.error('Error recording udhaar:', err);
+      alert(err.message);
+    });
   };
 
   const handleSavePayment = async (e: React.FormEvent) => {
@@ -281,7 +295,11 @@ export default function Customers() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
-    .then(res => res.json())
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to record payment');
+      return data;
+    })
     .then(() => {
       fetchCustomers();
       if (selectedCustomer) {
@@ -290,7 +308,10 @@ export default function Customers() {
       setIsPaymentModalOpen(false);
       resetPaymentForm();
     })
-    .catch(err => console.error('Error recording payment:', err));
+    .catch(err => {
+      console.error('Error recording payment:', err);
+      alert(err.message);
+    });
   };
 
   // --- Reset Forms ---

@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { RedirectToSignIn, SignedIn, SignedOut } from '@clerk/clerk-react';
 import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Sales from './pages/Sales';
@@ -9,8 +10,15 @@ import Udhaar from './pages/Udhaar';
 import Customers from './pages/Customers';
 import Inventory from './pages/Inventory';
 import Landing from './pages/Landing';
+import { enableGuestMode, isGuestMode } from './guestMode';
 
 function RequireAuth({ children }: { children: ReactNode }) {
+  const [guestMode] = useState(isGuestMode);
+
+  if (guestMode) {
+    return children;
+  }
+
   return (
     <>
       <SignedIn>{children}</SignedIn>
@@ -21,11 +29,20 @@ function RequireAuth({ children }: { children: ReactNode }) {
   );
 }
 
+function StartGuestMode() {
+  useEffect(() => {
+    enableGuestMode();
+  }, []);
+
+  return <Navigate to="/app/dashboard" replace />;
+}
+
 export default function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/guest/start" element={<StartGuestMode />} />
         <Route path="/app" element={<RequireAuth><Layout /></RequireAuth>}>
           <Route index element={<Navigate to="/app/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />

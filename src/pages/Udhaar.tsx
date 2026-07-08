@@ -114,12 +114,17 @@ export default function Udhaar() {
         lastPayment: new Date().toISOString()
       })
     })
-    .then(res => res.json())
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to add customer');
+      return data;
+    })
     .then(data => {
       setUdhaar([...udhaar, data]);
       setIsCustomerModalOpen(false);
       setNewCustomer({ name: '', phone: '', amountOwed: '' });
-    });
+    })
+    .catch(err => alert(err.message));
   };
 
   const handleRecordPayment = async (e: React.FormEvent) => {
@@ -129,13 +134,18 @@ export default function Udhaar() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ paymentAmount: parseFloat(paymentAmount) })
     })
-    .then(res => res.json())
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to record payment');
+      return data;
+    })
     .then(() => {
       fetchUdhaar();
       setIsPaymentModalOpen(false);
       setSelectedCustomer(null);
       setPaymentAmount('');
-    });
+    })
+    .catch(err => alert(err.message));
   };
 
   const startUdhaarCamera = async () => {
@@ -205,13 +215,20 @@ export default function Udhaar() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
-    .then(res => res.json())
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to record udhaar');
+      return data;
+    })
     .then(() => {
       fetchUdhaar();
       setIsUdhaarModalOpen(false);
       resetUdhaarForm();
     })
-    .catch(err => console.error('Error recording udhaar:', err));
+    .catch(err => {
+      console.error('Error recording udhaar:', err);
+      alert(err.message);
+    });
   };
 
   const resetUdhaarForm = () => {

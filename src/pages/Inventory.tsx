@@ -34,12 +34,17 @@ export default function Inventory() {
         status: parseInt(newItem.stock as any) === 0 ? 'Out of Stock' : (parseInt(newItem.stock as any) <= parseInt(newItem.minStock as any) ? 'Low Stock' : 'In Stock')
       })
     })
-    .then(res => res.json())
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to add product');
+      return data;
+    })
     .then(data => {
       setInventory([...inventory, data]);
       setIsModalOpen(false);
       setNewItem({ name: '', sku: '', category: 'Grocery', price: '', stock: 10, minStock: 5 });
-    });
+    })
+    .catch(err => alert(err.message));
   };
 
   const getStatusStyle = (status: string) => {

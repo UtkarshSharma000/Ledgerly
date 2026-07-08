@@ -35,12 +35,17 @@ export default function Sales() {
         status: 'Completed' 
       })
     })
-    .then(res => res.json())
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to save sale');
+      return data;
+    })
     .then(data => {
       setSales([data, ...sales]);
       setIsModalOpen(false);
       setNewSale({ product: '', qty: 1, total: '', method: 'UPI' });
-    });
+    })
+    .catch(err => alert(err.message));
   };
 
   return (

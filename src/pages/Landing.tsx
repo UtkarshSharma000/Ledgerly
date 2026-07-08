@@ -75,6 +75,14 @@ export default function Landing() {
                   See controls
                 </a>
               </div>
+              <div className="mt-4">
+                <Link
+                  to="/guest/start"
+                  className="inline-flex text-sm font-semibold text-emerald-100 underline decoration-emerald-300/60 underline-offset-4 transition-colors hover:text-white"
+                >
+                  Continue as guest with limited records
+                </Link>
+              </div>
             </div>
 
             <div className="hidden lg:block">
@@ -112,7 +120,7 @@ export default function Landing() {
                 <h2 className="mt-4 text-base font-bold text-slate-950">{item.label}</h2>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   {item.label === 'Signed-in workspace'
-                    ? 'Every operational screen sits behind Clerk authentication.'
+                    ? 'Sign in for your real workspace, or try a capped guest session first.'
                     : item.label === 'Photo-backed udhaar'
                       ? 'Customer credit flows are designed around verification records.'
                       : 'Sales, expenses, inventory, customers, and payments stay grouped by workflow.'}
