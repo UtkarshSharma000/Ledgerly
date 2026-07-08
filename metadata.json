@@ -1,6 +1,6 @@
 {
   "name": "Ledgerly",
   "description": "Professional finance management and udhaar tracker for small businesses and stalls.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["camera"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ReceiptText, CreditCard, Users, PackageSearch, Settings, Menu, Bell } from 'lucide-react';
+import { LayoutDashboard, ReceiptText, CreditCard, Users, UserCheck, PackageSearch, Settings, Menu, Bell } from 'lucide-react';
 import { Outlet } from 'react-router-dom';
 import { useState } from 'react';
 import { motion } from 'motion/react';
@@ -9,7 +9,8 @@ const navItems = [
   { path: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/app/sales', label: 'Sales', icon: ReceiptText },
   { path: '/app/expenses', label: 'Expenses', icon: CreditCard },
-  { path: '/app/udhaar', label: 'Udhaar (Credit)', icon: Users },
+  { path: '/app/udhaar', label: 'Udhaar (Credit)', icon: UserCheck },
+  { path: '/app/customers', label: 'Customers & Proof', icon: Users },
   { path: '/app/inventory', label: 'Inventory', icon: PackageSearch },
 ];
 
