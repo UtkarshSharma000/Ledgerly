@@ -24,9 +24,9 @@ export default function Landing() {
       <section className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
         <motion.div
           className="absolute inset-0"
-          initial={{ opacity: 0, scale: 1.04 }}
+          initial={{ opacity: 0, scale: 1.03 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
         >
           <UnicornScene
             projectId={UNICORN_PROJECT_ID}
@@ -40,14 +40,19 @@ export default function Landing() {
             production={true}
           />
         </motion.div>
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.96)_0%,rgba(15,23,42,0.90)_50%,rgba(15,23,42,0.70)_100%)]" />
+        <motion.div
+          className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.88)_0%,rgba(15,23,42,0.78)_48%,rgba(15,23,42,0.46)_100%)]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.15, delay: 1.05, ease: [0.22, 1, 0.36, 1] }}
+        />
 
         <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl flex-col px-5 sm:px-6 lg:px-8">
           <motion.header
             className="flex h-20 items-center justify-between"
             initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.7, delay: 1.35, ease: [0.22, 1, 0.36, 1] }}
           >
             <Link to="/" className="flex items-center gap-3">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-500 text-base font-black text-white">
@@ -68,7 +73,7 @@ export default function Landing() {
             className="flex flex-1 items-center py-12"
             initial="hidden"
             animate="visible"
-            transition={{ staggerChildren: 0.14, delayChildren: 0.18 }}
+            transition={{ staggerChildren: 0.16, delayChildren: 1.5 }}
           >
             <div className="max-w-4xl">
               <motion.div
@@ -133,7 +138,7 @@ export default function Landing() {
               className="inline-flex items-center gap-2 text-sm font-semibold text-slate-300 transition-colors hover:text-white"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 1.1, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.7, delay: 2.25, ease: [0.22, 1, 0.36, 1] }}
             >
               Scroll for controls
               <ArrowDown className="h-4 w-4 animate-bounce" />
