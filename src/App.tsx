@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { RedirectToSignIn, SignedIn, SignedOut } from '@clerk/clerk-react';
 import type { ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Sales from './pages/Sales';
@@ -30,10 +30,7 @@ function RequireAuth({ children }: { children: ReactNode }) {
 }
 
 function StartGuestMode() {
-  useEffect(() => {
-    enableGuestMode();
-  }, []);
-
+  enableGuestMode();
   return <Navigate to="/app/dashboard" replace />;
 }
 
