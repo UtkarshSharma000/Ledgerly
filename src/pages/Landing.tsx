@@ -28,7 +28,7 @@ export default function Landing() {
 
         <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl flex-col px-5 sm:px-6 lg:px-8">
           <motion.header className="flex h-20 items-center justify-between" initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}>
-            <Link to="/" className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-md bg-white text-base font-black text-neutral-950">L</span><span className="text-xl font-extrabold">Ledgerly</span></Link>
+            <Link to="/" className="flex items-center gap-3"><img src="/ledgerly-mark.jpg" alt="" className="h-9 w-9 rounded-md object-cover" /><span className="text-xl font-extrabold">Ledgerly</span></Link>
             <Link to="/app/dashboard" className="inline-flex items-center gap-2 rounded-md border border-white/70 bg-transparent px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-neutral-950">Sign in<ArrowRight className="h-4 w-4" /></Link>
           </motion.header>
 

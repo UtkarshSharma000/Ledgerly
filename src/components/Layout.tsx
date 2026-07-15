@@ -39,7 +39,7 @@ export default function Layout() {
       <aside className={`fixed inset-y-0 left-0 z-50 flex w-[236px] flex-col border-r border-[var(--app-border)] bg-[var(--app-sidebar)] transition-transform duration-200 ease-in-out lg:static lg:inset-auto lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex items-center gap-2.5 px-6 py-6">
           <Link to="/" className="flex items-center gap-2.5 text-[20px] font-extrabold text-[var(--app-text)]">
-            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-[var(--accent)] text-sm font-black text-white">L</span>
+            <img src="/ledgerly-mark.jpg" alt="" className="h-8 w-8 rounded-md object-cover" />
             Ledgerly
           </Link>
         </div>
