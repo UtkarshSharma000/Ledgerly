@@ -3,9 +3,9 @@ import UnicornScene from 'unicornstudio-react';
 import { ArrowDown, ArrowRight, BadgeCheck, Camera, LockKeyhole, ReceiptText } from 'lucide-react';
 import { motion } from 'motion/react';
 
-const UNICORN_PROJECT_ID = '6daVuQWMJP0W4VYgzNrz';
+const UNICORN_PROJECT_ID = '4OxHKCLZnuhFfhDZHZ4p';
 const UNICORN_SDK_URL =
-  'https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.2.6/dist/unicornStudio.umd.js';
+  'https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.2.7/dist/unicornStudio.umd.js';
 
 const trustPoints = [
   { label: 'Signed-in workspace', icon: LockKeyhole },
@@ -73,7 +73,7 @@ export default function Landing() {
             className="flex flex-1 items-center py-12"
             initial="hidden"
             animate="visible"
-            transition={{ staggerChildren: 0.16, delayChildren: 1.5 }}
+            transition={{ staggerChildren: 0.16, delayChildren: 1.7 }}
           >
             <div className="max-w-4xl">
               <motion.div
@@ -87,16 +87,16 @@ export default function Landing() {
               <motion.h1
                 variants={fadeUp}
                 transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
-                className="max-w-4xl text-5xl font-black leading-[1.02] tracking-normal text-white sm:text-6xl lg:text-7xl"
+                className="max-w-3xl [font-family:var(--font-display)] text-5xl leading-[1.08] tracking-normal text-white sm:text-6xl lg:text-7xl"
               >
-                Manage udhaar, sales, and proof in one signed-in workspace.
+                Small records. Clear decisions. Stronger businesses.
               </motion.h1>
               <motion.p
                 variants={fadeUp}
                 transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
                 className="mt-6 max-w-2xl text-lg leading-8 text-slate-300"
               >
-                Ledgerly keeps your daily shop records private, structured, and tied to customer verification, so your team can work from real account data instead of loose notes.
+                Build a dependable daily rhythm with private records, verified customer credit, and a ledger your team can trust.
               </motion.p>
               <motion.div
                 variants={fadeUp}
