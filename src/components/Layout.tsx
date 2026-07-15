@@ -21,7 +21,7 @@ export default function Layout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAppearanceOpen, setIsAppearanceOpen] = useState(false);
   const [themeMode, setThemeMode] = useState<ThemeMode>(() => (localStorage.getItem('ledgerly-mode') as ThemeMode) || 'light');
-  const [colorScheme, setColorScheme] = useState(() => localStorage.getItem('ledgerly-scheme') || 'cobalt');
+  const [colorScheme, setColorScheme] = useState(() => localStorage.getItem('ledgerly-scheme') || 'linen');
   const guestMode = isGuestMode();
 
   useEffect(() => {

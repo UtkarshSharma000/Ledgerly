@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import UnicornScene from 'unicornstudio-react';
 import { ArrowDown, ArrowRight, Camera, LockKeyhole, ReceiptText } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, useScroll, useTransform } from 'motion/react';
 
 const UNICORN_PROJECT_ID = '4OxHKCLZnuhFfhDZHZ4p';
 const UNICORN_SDK_URL = 'https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.2.7/dist/unicornStudio.umd.js';
@@ -15,6 +15,10 @@ const trustPoints = [
 const fadeUp = { hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0 } };
 
 export default function Landing() {
+  const { scrollYProgress } = useScroll();
+  const quoteY = useTransform(scrollYProgress, [0, 0.3], [0, -80]);
+  const quoteOpacity = useTransform(scrollYProgress, [0, 0.26], [1, 0]);
+
   return (
     <main className="min-h-screen bg-[#f7f7f4] font-sans text-slate-950">
       <section className="relative min-h-screen overflow-hidden bg-neutral-950 text-white">
@@ -28,7 +32,9 @@ export default function Landing() {
             <Link to="/app/dashboard" className="inline-flex items-center gap-2 rounded-md border border-white/70 bg-transparent px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-neutral-950">Sign in<ArrowRight className="h-4 w-4" /></Link>
           </motion.header>
 
-          <div className="flex flex-1" />
+          <motion.div style={{ y: quoteY, opacity: quoteOpacity }} className="flex flex-1 items-center justify-center py-16 text-center">
+            <motion.blockquote initial={{ opacity: 0, y: 20, filter: 'blur(8px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} transition={{ duration: 1.1, delay: 0.65, ease: [0.22, 1, 0.36, 1] }} className="max-w-3xl [font-family:var(--font-display)] text-5xl leading-[1.08] text-white drop-shadow-[0_3px_16px_rgba(0,0,0,0.75)] sm:text-6xl lg:text-7xl">“Clarity is built one careful record at a time.”</motion.blockquote>
+          </motion.div>
 
           <div className="pb-7">
             <motion.a href="#controls" className="inline-flex items-center gap-2 text-sm font-semibold text-white/90 transition-colors hover:text-white" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}>Scroll to continue<ArrowDown className="h-4 w-4 animate-bounce" /></motion.a>

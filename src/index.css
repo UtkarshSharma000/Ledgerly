@@ -62,18 +62,6 @@ body {
   color: var(--app-text);
 }
 
-.app-shell[data-mode='dark'] {
-  --app-page: #111318;
-  --app-surface: #181b22;
-  --app-sidebar: #151820;
-  --app-panel: #20242d;
-  --app-border: #2a303b;
-  --app-text: #f3f4f6;
-  --app-muted: #a5adbb;
-  --app-faint: #778194;
-  --app-hover: #242a35;
-}
-
 .app-content { background: var(--app-page); }
 
 .app-shell[data-mode='dark'] .bg-white { background-color: var(--app-surface) !important; }
