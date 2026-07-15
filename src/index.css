@@ -48,6 +48,52 @@ body {
   @apply bg-slate-100 text-slate-900;
 }
 
+.app-shell {
+  --app-page: #f7f8fa;
+  --app-surface: #ffffff;
+  --app-sidebar: #fcfcfd;
+  --app-panel: #f8fafc;
+  --app-border: #e5e7eb;
+  --app-text: #172033;
+  --app-muted: #667085;
+  --app-faint: #98a2b3;
+  --app-hover: #f2f4f7;
+  background: var(--app-page);
+  color: var(--app-text);
+}
+
+.app-shell[data-mode='dark'] {
+  --app-page: #111318;
+  --app-surface: #181b22;
+  --app-sidebar: #151820;
+  --app-panel: #20242d;
+  --app-border: #2a303b;
+  --app-text: #f3f4f6;
+  --app-muted: #a5adbb;
+  --app-faint: #778194;
+  --app-hover: #242a35;
+}
+
+.app-content { background: var(--app-page); }
+
+.app-shell[data-mode='dark'] .bg-white { background-color: var(--app-surface) !important; }
+.app-shell[data-mode='dark'] .bg-slate-50,
+.app-shell[data-mode='dark'] .bg-slate-100 { background-color: var(--app-panel) !important; }
+.app-shell[data-mode='dark'] .border-slate-100,
+.app-shell[data-mode='dark'] .border-slate-200 { border-color: var(--app-border) !important; }
+.app-shell[data-mode='dark'] .text-slate-900,
+.app-shell[data-mode='dark'] .text-slate-800,
+.app-shell[data-mode='dark'] .text-slate-700 { color: var(--app-text) !important; }
+.app-shell[data-mode='dark'] .text-slate-600,
+.app-shell[data-mode='dark'] .text-slate-500,
+.app-shell[data-mode='dark'] .text-slate-400 { color: var(--app-muted) !important; }
+.app-shell[data-mode='dark'] input,
+.app-shell[data-mode='dark'] select,
+.app-shell[data-mode='dark'] textarea { background: var(--app-surface); color: var(--app-text); border-color: var(--app-border); }
+.app-shell[data-mode='dark'] .shadow-sm,
+.app-shell[data-mode='dark'] .shadow-md,
+.app-shell[data-mode='dark'] .shadow-xl { box-shadow: none !important; }
+
 /* Hide Unicorn Studio watermark */
 a[href*="unicorn.studio"], 
 img[src*="us_fwb.png"] {
