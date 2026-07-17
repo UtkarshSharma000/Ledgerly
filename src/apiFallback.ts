@@ -8,6 +8,7 @@ type GuestStore = {
   expenses: any[];
   customers: any[];
   udhaar: any[];
+  payments: any[];
   inventory: any[];
 };
 
@@ -31,13 +32,21 @@ function emptyStore(): GuestStore {
     expenses: [],
     customers: [],
     udhaar: [],
+    payments: [],
     inventory: [],
   };
 }
 
+function storeKey() {
+  if (isGuestMode()) return GUEST_STORE_KEY;
+
+  const userId = (window as any).Clerk?.user?.id || 'signed-in-local';
+  return `ledgerly_local_store_${userId}`;
+}
+
 function readStore(): GuestStore {
   try {
-    const parsed = JSON.parse(window.localStorage.getItem(GUEST_STORE_KEY) || '{}');
+    const parsed = JSON.parse(window.localStorage.getItem(storeKey()) || '{}');
     return { ...emptyStore(), ...parsed };
   } catch {
     return emptyStore();
@@ -45,7 +54,7 @@ function readStore(): GuestStore {
 }
 
 function writeStore(store: GuestStore) {
-  window.localStorage.setItem(GUEST_STORE_KEY, JSON.stringify(store));
+  window.localStorage.setItem(storeKey(), JSON.stringify(store));
 }
 
 function jsonResponse(status: number, body: unknown) {
@@ -116,8 +125,8 @@ function dashboardFromStore(store: GuestStore) {
   };
 }
 
-function limitedAppend<T extends Record<string, any>>(items: T[], item: T, prefix: string) {
-  if (items.length >= GUEST_LIMIT) {
+function limitedAppend<T extends Record<string, any>>(items: T[], item: T, prefix: string, limit?: number) {
+  if (limit && items.length >= limit) {
     return null;
   }
 
@@ -129,7 +138,17 @@ function limitedAppend<T extends Record<string, any>>(items: T[], item: T, prefi
   };
 }
 
-async function guestResponse(url: string, method: string, init?: RequestInit) {
+function reduceCustomerBalance(store: GuestStore, customerId: string | number, amount: number) {
+  const customer = store.customers.find(item => String(item.id) === String(customerId));
+  if (!customer) return null;
+
+  customer.amountOwed = Math.max(0, Number(customer.amountOwed || 0) - amount);
+  customer.status = customer.amountOwed === 0 ? 'Settled' : 'Unpaid';
+  customer.lastPayment = new Date().toISOString();
+  return customer;
+}
+
+async function localWorkspaceResponse(url: string, method: string, init?: RequestInit, limited = isGuestMode()) {
   const path = apiPath(url);
   const store = readStore();
 
@@ -166,7 +185,7 @@ async function guestResponse(url: string, method: string, init?: RequestInit) {
     const body = await readBody(init);
 
     if (path === 'sales') {
-      const record = limitedAppend(store.sales, body, 'GUEST-SALE');
+      const record = limitedAppend(store.sales, body, 'LOCAL-SALE', limited ? GUEST_LIMIT : undefined);
       if (!record) return jsonResponse(403, { error: 'Guest limit reached: 5 sales.' });
       store.sales.unshift(record);
       writeStore(store);
@@ -174,7 +193,7 @@ async function guestResponse(url: string, method: string, init?: RequestInit) {
     }
 
     if (path === 'expenses') {
-      const record = limitedAppend(store.expenses, body, 'GUEST-EXP');
+      const record = limitedAppend(store.expenses, body, 'LOCAL-EXP', limited ? GUEST_LIMIT : undefined);
       if (!record) return jsonResponse(403, { error: 'Guest limit reached: 5 expenses.' });
       store.expenses.unshift(record);
       writeStore(store);
@@ -182,7 +201,7 @@ async function guestResponse(url: string, method: string, init?: RequestInit) {
     }
 
     if (path === 'inventory') {
-      const record = limitedAppend(store.inventory, body, 'GUEST-ITEM');
+      const record = limitedAppend(store.inventory, body, 'LOCAL-ITEM', limited ? GUEST_LIMIT : undefined);
       if (!record) return jsonResponse(403, { error: 'Guest limit reached: 5 inventory items.' });
       store.inventory.push(record);
       writeStore(store);
@@ -190,7 +209,7 @@ async function guestResponse(url: string, method: string, init?: RequestInit) {
     }
 
     if (path === 'customers') {
-      const record = limitedAppend(store.customers, { ...body, amountOwed: 0, status: 'Good' }, 'GUEST-CUST');
+      const record = limitedAppend(store.customers, { ...body, amountOwed: 0, status: 'Good' }, 'LOCAL-CUST', limited ? GUEST_LIMIT : undefined);
       if (!record) return jsonResponse(403, { error: 'Guest limit reached: 5 customers.' });
       store.customers.push(record);
       writeStore(store);
@@ -198,23 +217,52 @@ async function guestResponse(url: string, method: string, init?: RequestInit) {
     }
 
     if (path === 'udhaar') {
-      const record = limitedAppend(store.udhaar, { ...body, status: body.status || 'Unpaid' }, 'GUEST-UDHAAR');
+      const record = limitedAppend(store.udhaar, { ...body, status: body.status || 'Unpaid' }, 'LOCAL-UDHAAR', limited ? GUEST_LIMIT : undefined);
       if (!record) return jsonResponse(403, { error: 'Guest limit reached: 5 udhaar records.' });
       store.udhaar.push(record);
+      const customer = store.customers.find(item => String(item.id) === String(body.customerId));
+      if (customer) {
+        customer.amountOwed = Number(customer.amountOwed || 0) + Number(body.amount || 0);
+        customer.status = 'Unpaid';
+        customer.lastPurchase = new Date().toISOString();
+      }
       writeStore(store);
       return jsonResponse(201, record);
     }
 
     if (path === 'payments') {
-      return jsonResponse(403, { error: 'Guest mode does not support payments. Sign in to record real payments.' });
+      if (limited) return jsonResponse(403, { error: 'Guest mode does not support payments. Sign in to record payments.' });
+      const record = limitedAppend(store.payments, body, 'LOCAL-PAYMENT');
+      if (!record) return jsonResponse(400, { error: 'Unable to record payment.' });
+      store.payments.push(record);
+      reduceCustomerBalance(store, body.customerId, Number(body.amount || 0));
+      writeStore(store);
+      return jsonResponse(201, record);
     }
   }
 
   if (method === 'PUT' && /^udhaar\/[^/]+\/payment$/.test(path)) {
-    return jsonResponse(403, { error: 'Guest mode does not support payments. Sign in to record real payments.' });
+    if (limited) return jsonResponse(403, { error: 'Guest mode does not support payments. Sign in to record payments.' });
+    const body = await readBody(init);
+    const customerId = path.split('/')[1];
+    const updatedCustomer = reduceCustomerBalance(store, customerId, Number(body.paymentAmount || 0));
+    if (!updatedCustomer) return jsonResponse(404, { error: 'Customer not found.' });
+    writeStore(store);
+    return jsonResponse(200, updatedCustomer);
   }
 
   return jsonResponse(404, { error: 'API route not found' });
+}
+
+async function databaseUnavailable(response: Response) {
+  if (response.status !== 503) return false;
+
+  try {
+    const body = await response.clone().json();
+    return typeof body?.error === 'string' && body.error.includes('DATABASE_URL');
+  } catch {
+    return false;
+  }
 }
 
 function fallbackBody(url: string, method: string) {
@@ -253,16 +301,18 @@ export function installApiJsonFallback() {
     const method = (init?.method || (input instanceof Request ? input.method : 'GET')).toUpperCase();
 
     if (isGuestMode()) {
-      return guestResponse(url, method, init);
+      return localWorkspaceResponse(url, method, init);
     }
 
     const response = await nativeFetch(input, init);
     const contentType = response.headers.get('content-type') || '';
     if (contentType.includes('application/json')) {
+      if (await databaseUnavailable(response)) {
+        return localWorkspaceResponse(url, method, init, false);
+      }
       return response;
     }
 
-    const status = method === 'GET' ? 200 : 503;
-    return jsonResponse(status, fallbackBody(url, method));
+    return localWorkspaceResponse(url, method, init, false);
   };
 }
